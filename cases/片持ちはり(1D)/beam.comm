@@ -1,0 +1,64 @@
+DEBUT(identifier=u'0:1',
+      )
+
+elem0 = LIRE_MAILLAGE(identifier=u'1:1',
+                      FORMAT='MED',
+                      UNITE=4)
+
+model = AFFE_MODELE(identifier=u'2:1',
+                    AFFE=_F(MODELISATION=('POU_D_E', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=elem0)
+
+carael = AFFE_CARA_ELEM(identifier=u'3:1',
+                        MODELE=model,
+                        POUTRE=_F(CARA=('A', 'IY', 'IZ', 'EY', 'EZ', 'JX', 'RY', 'RZ'),
+                                  GROUP_MA='edge',
+                                  SECTION='GENERALE',
+                                  VALE=(4e-05, 1.33333e-11, 1.33333e-09, 0.0, 0.0, 4.94237e-11, 0.01, 0.001)))
+
+prop = DEFI_MATERIAU(identifier=u'4:1',
+                     ELAS=_F(ALPHA=0.01,
+                             E=2.1e+11,
+                             NU=0.3,
+                             RHO=7800))
+
+material = AFFE_MATERIAU(identifier=u'5:1',
+                         AFFE=_F(MATER=prop,
+                                 TOUT='OUI'),
+                         MAILLAGE=elem0)
+
+B_1 = AFFE_CHAR_MECA(identifier=u'6:1',
+                     DDL_IMPO=_F(GROUP_NO='hold',
+                                 LIAISON='ENCASTRE'),
+                     FORCE_NODALE=_F(FZ=-10,
+                                     GROUP_NO='load'),
+                     MODELE=model)
+
+reslin = MECA_STATIQUE(identifier=u'7:1',
+                       CARA_ELEM=carael,
+                       CHAM_MATER=material,
+                       EXCIT=_F(CHARGE=B_1),
+                       MODELE=model)
+
+unnamed0 = CALC_CHAMP(identifier=u'8:1',
+                      CONTRAINTE=('SIPO_ELNO', 'SIPO_NOEU', 'SIEF_NOEU', 'SIEF_ELNO'),
+                      FORCE=('FORC_NODA', 'REAC_NODA'),
+                      RESULTAT=reslin)
+
+IMPR_RESU(identifier=u'9:1',
+          FORMAT='MED',
+          RESU=_F(MAILLAGE=elem0,
+                  NOM_CHAM=('DEPL', ),
+                  RESULTAT=reslin),
+          UNITE=2)
+
+IMPR_RESU(identifier=u'10:1',
+          RESU=_F(MAILLAGE=elem0,
+                  NOM_CHAM=('SIPO_ELNO', 'SIPO_NOEU', 'REAC_NODA', 'FORC_NODA', 'SIEF_NOEU', 'SIEF_ELNO'),
+                  RESULTAT=unnamed0),
+          UNITE=3)
+
+FIN(identifier=u'11:1',
+    )
