@@ -1,0 +1,54 @@
+DEBUT(identifier=u'0:1',
+      LANG='EN')
+
+mesh = LIRE_MAILLAGE(identifier=u'1:1',
+                     FORMAT='MED',
+                     UNITE=20)
+
+model = AFFE_MODELE(identifier=u'2:1',
+                    AFFE=_F(MODELISATION=('AXIS', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=mesh)
+
+mater0 = DEFI_MATERIAU(identifier=u'3:1',
+                       ELAS=_F(E=200000.0,
+                               NU=0.3))
+
+fieldma1 = AFFE_MATERIAU(identifier=u'4:1',
+                         AFFE=_F(MATER=(mater0, ),
+                                 TOUT='OUI'),
+                         MODELE=model)
+
+fix = AFFE_CHAR_MECA(identifier=u'5:1',
+                     DDL_IMPO=_F(DY=0.0,
+                                 GROUP_MA=('fix', )),
+                     MODELE=model)
+
+load = AFFE_CHAR_MECA(identifier=u'6:1',
+                      MODELE=model,
+                      PRES_REP=_F(GROUP_MA=('load', ),
+                                  PRES=100.0))
+
+reslin = MECA_STATIQUE(identifier=u'7:1',
+                       CHAM_MATER=fieldma1,
+                       EXCIT=(_F(CHARGE=load),
+                              _F(CHARGE=fix)),
+                       MODELE=model)
+
+reslin = CALC_CHAMP(identifier=u'8:1',
+                    reuse=reslin,
+                    CONTRAINTE=('SIGM_NOEU', ),
+                    CRITERES=('SIEQ_NOEU', ),
+                    DEFORMATION=('EPSI_NOEU', ),
+                    FORCE=('FORC_NODA', 'REAC_NODA'),
+                    RESULTAT=reslin)
+
+IMPR_RESU(identifier=u'9:1',
+          FORMAT='MED',
+          RESU=_F(NOM_CHAM=('EPSI_NOEU', 'SIEQ_NOEU', 'SIGM_NOEU', 'DEPL'),
+                  RESULTAT=reslin),
+          UNITE=2)
+
+FIN(identifier=u'10:1',
+    )
